@@ -4,9 +4,11 @@ name: Plan Gate
 on:
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   require-plan:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     outputs:
       has_template: ${{ steps.check.outputs.has_template }}
