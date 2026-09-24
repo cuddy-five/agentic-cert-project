@@ -18,6 +18,7 @@ jobs:
           if [ ! -f ".github/pull_request_template.md" ]; then
             echo "has_template=false" >> "$GITHUB_OUTPUT"
             echo ".github/pull_request_template.md is required for this pull request."
+            echo "::error::Plan template is missing. Add a .github/pull_request_template.md"
             exit 1
           fi
           echo "has_template=true" >> "$GITHUB_OUTPUT"
