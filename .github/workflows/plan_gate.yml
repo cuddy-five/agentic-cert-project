@@ -1,4 +1,4 @@
-# File: .github/workflows/plan-gate.yml
+# File: .github/workflows/plan_gate.yml
 name: Plan Gate
 
 on:
@@ -10,11 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Require plan artifact
         run: |
-          if [ ! -f "Github/pull_request_template.md" ]; then
-            echo "Github/pull_request_template.md is required for this pull request."
+          if [ ! -f ".github/pull_request_template.md" ]; then
+            echo ".github/pull_request_template.md is required for this pull request."
             exit 1
           fi
-          echo "Github/pull_request_template.md found."
+          echo ".github/pull_request_template.md found."
