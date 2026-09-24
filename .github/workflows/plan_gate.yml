@@ -8,12 +8,26 @@ on:
 jobs:
   require-plan:
     runs-on: ubuntu-latest
+    outputs:
+      has_template: ${{ steps.check.outputs.has_template }}
     steps:
       - uses: actions/checkout@v4
-      - name: Require plan artifact
+      - id: check  
+        name: Require plan artifact
         run: |
           if [ ! -f ".github/pull_request_template.md" ]; then
+            echo "has_template=false" >> "$GITHUB_OUTPUT"
             echo ".github/pull_request_template.md is required for this pull request."
+            echo "::error::Plan template is missing. Add a .github/pull_request_template.md"
             exit 1
           fi
+          echo "has_template=true" >> "$GITHUB_OUTPUT"
           echo ".github/pull_request_template.md found."
+      - name: Show template flag
+        run: echo "has_template is ${{ steps.check.outputs.has_template }}"
+  read-flag:
+        needs: require-plan
+        runs-on: ubuntu-latest
+        steps:
+          - name: Use the published flag
+            run: echo "other job sees ${{ needs.require-plan.outputs.has_template }}"    
