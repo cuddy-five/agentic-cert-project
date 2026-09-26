@@ -15,6 +15,8 @@
 
 ## Evidence
 - Workflow run(s):
+- Commit SHA this run evaluated:
+- Durable proof (artifact name, repo path, or “Actions log only”):
 - Scan results (if applicable):
 
 ## Review checklist
