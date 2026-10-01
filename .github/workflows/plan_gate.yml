@@ -4,9 +4,12 @@ name: Plan Gate
 on:
   pull_request:
     branches: [ main ]
+    types: [opened, synchronize, reopened, edited]
   workflow_dispatch:
+
 permissions:
   contents: read
+
 jobs:
   require-plan:
     if: github.event_name == 'pull_request'
@@ -15,7 +18,7 @@ jobs:
       has_template: ${{ steps.check.outputs.has_template }}
     steps:
       - uses: actions/checkout@v4
-      - id: check  
+      - id: check
         name: Require plan artifact
         run: |
           if [ ! -f ".github/pull_request_template.md" ]; then
@@ -26,11 +29,18 @@ jobs:
           fi
           echo "has_template=true" >> "$GITHUB_OUTPUT"
           echo ".github/pull_request_template.md found."
+      - name: Prove a missing heading fails
+        run: bash .github/scripts/require-plan-headings.sh --self-test
+      - name: Require plan headings
+        env:
+          # Event payload already on the runner. Not an API call, secret, or extra service.
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: bash .github/scripts/require-plan-headings.sh
       - name: Show template flag
         run: echo "has_template is ${{ steps.check.outputs.has_template }}"
   read-flag:
-        needs: require-plan
-        runs-on: ubuntu-latest
-        steps:
-          - name: Use the published flag
-            run: echo "other job sees ${{ needs.require-plan.outputs.has_template }}"    
+    needs: require-plan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use the published flag
+        run: echo "other job sees ${{ needs.require-plan.outputs.has_template }}"
