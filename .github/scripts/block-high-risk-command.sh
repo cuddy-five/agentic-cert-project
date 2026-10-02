@@ -55,9 +55,25 @@ match_pr_merge() {
 match_api_merge() {
   local text="$1"
   local api='(^|[^[:alnum:]_])gh[[:space:]]+api[[:space:]]+'
-  local merge='pulls/[0-9]+/merge([^[:alnum:]_]|$)'
+  local merge='pulls/[^[:space:]/]+/merge([^[:alnum:]_]|$)'
   if [[ "$text" =~ $api ]] && [[ "$text" =~ $merge ]]; then
     printf '%s' "Merging through the pulls merge API is blocked. The agent does not merge its own pull request."
+  fi
+}
+
+# curl and wget can call the same merge and ruleset endpoints as gh api.
+match_http_governance() {
+  local text="$1"
+  local client='(^|[^[:alnum:]_])(curl|wget)[[:space:]]'
+  local write='(^|[^[:alnum:]_-])(-x|--request)[[:space:]]*(put|patch|delete)([^[:alnum:]_]|$)'
+  local merge='pulls/[^[:space:]/]+/merge([^[:alnum:]_]|$)'
+  local rules='(rulesets|branches/[^[:space:]"]*/protection)'
+  if [[ "$text" =~ $client ]] && [[ "$text" =~ $write ]]; then
+    if [[ "$text" =~ $merge ]]; then
+      printf '%s' "Merging through the pulls merge API is blocked. The agent does not merge its own pull request."
+    elif [[ "$text" =~ $rules ]]; then
+      printf '%s' "Changing rulesets or branch protection through gh api is blocked."
+    fi
   fi
 }
 
@@ -96,6 +112,53 @@ match_governance_rm() {
   fi
 }
 
+# Split a command fragment into shell words. Quotes group a ref such as
+# "main" into the word main. They are not a signal to stop reading.
+split_shell_words() {
+  local s="$1"
+  local -n dest=$2
+  local i c n quote="" cur=""
+  dest=()
+  n=${#s}
+  for ((i = 0; i < n; i++)); do
+    c="${s:i:1}"
+    if [[ -n "$quote" ]]; then
+      if [[ "$c" == "$quote" ]]; then
+        quote=""
+        dest+=("$cur")
+        cur=""
+      elif [[ "$c" == "\\" && "$quote" == '"' ]]; then
+        i=$((i + 1))
+        cur+="${s:i:1}"
+      else
+        cur+="$c"
+      fi
+      continue
+    fi
+    # A double quote glued to a word is the end of the JSON string, as in
+    # main"}. A quote before a word, as in "main", starts a shell word.
+    if [[ "$c" == '"' && -n "$cur" ]]; then
+      dest+=("$cur")
+      break
+    fi
+    if [[ "$c" == '"' || "$c" == "'" ]]; then
+      quote="$c"
+      continue
+    fi
+    if [[ "$c" =~ [[:space:]] ]]; then
+      if [[ -n "$cur" ]]; then
+        dest+=("$cur")
+        cur=""
+      fi
+      continue
+    fi
+    cur+="$c"
+  done
+  if [[ -n "$cur" || -n "$quote" ]]; then
+    dest+=("$cur")
+  fi
+}
+
 # Inspect one git push argument list. Protected destinations win over force.
 classify_push_args() {
   local args="$1"
@@ -107,10 +170,9 @@ classify_push_args() {
   local short_force='^-[^-]*f[^-]*$'
   local protected_ref='^(\+)?([a-z0-9._/-]*:)?(refs/heads/)?(main|master)$'
 
-  # The payload continues after the command. Keep the shell words only.
-  args="${args%%\"*}"
-  read -r -a words <<< "$args"
+  split_shell_words "$args" words
   for word in "${words[@]}"; do
+    [[ -n "$word" ]] || continue
     if [[ "$end_opts" -eq 0 && "$word" == "--" ]]; then
       end_opts=1
       continue
@@ -172,6 +234,8 @@ decide() {
   reason="$(match_pr_merge "$text")"
   [[ -z "$reason" ]] || deny "$reason"
   reason="$(match_api_merge "$text")"
+  [[ -z "$reason" ]] || deny "$reason"
+  reason="$(match_http_governance "$text")"
   [[ -z "$reason" ]] || deny "$reason"
   reason="$(match_ruleset_write "$text")"
   [[ -z "$reason" ]] || deny "$reason"
@@ -237,6 +301,15 @@ self_test() {
   payload='{"toolName":"bash","toolArgs":{"command":"git push origin main"}}'
   expect_deny "push origin main" "$payload" "main or master" || failed=1
 
+  payload='{"toolName":"bash","toolArgs":{"command":"git push origin \"main\""}}'
+  expect_deny "quoted main" "$payload" "main or master" || failed=1
+
+  payload='{"toolName":"bash","toolArgs":{"command":"git push origin '\''master'\''"}}'
+  expect_deny "single-quoted master" "$payload" "main or master" || failed=1
+
+  payload='{"toolName":"bash","toolArgs":{"command":"git push origin \"refs/heads/main\""}}'
+  expect_deny "quoted refs/heads/main" "$payload" "main or master" || failed=1
+
   payload='{"toolName":"bash","toolArgs":"{\"command\":\"git push origin HEAD:main\"}"}'
   expect_deny "stringified push HEAD:main" "$payload" "main or master" || failed=1
 
@@ -273,6 +346,17 @@ self_test() {
   payload='{"toolName":"bash","toolArgs":{"command":"gh api -X PUT repos/acme/widgets/pulls/12/merge"}}'
   expect_deny "pulls merge API" "$payload" "merge API" || failed=1
 
+  # $PR is literal command text. Copilot sends it that way.
+  # shellcheck disable=SC2016
+  payload='{"toolName":"bash","toolArgs":{"command":"gh api -X PUT repos/acme/widgets/pulls/$PR/merge"}}'
+  expect_deny "pulls merge API with a variable" "$payload" "merge API" || failed=1
+
+  payload='{"toolName":"bash","toolArgs":{"command":"curl -X PUT https://api.github.com/repos/acme/widgets/pulls/12/merge"}}'
+  expect_deny "curl pulls merge" "$payload" "merge API" || failed=1
+
+  payload='{"toolName":"bash","toolArgs":{"command":"curl -X DELETE https://api.github.com/repos/acme/widgets/rulesets/4"}}'
+  expect_deny "curl delete ruleset" "$payload" "rulesets" || failed=1
+
   payload='{"toolName":"bash","toolArgs":{"command":"gh api --method DELETE repos/acme/widgets/rulesets/4"}}'
   expect_deny "delete ruleset" "$payload" "rulesets" || failed=1
 
@@ -290,6 +374,12 @@ self_test() {
 
   payload='{"toolName":"bash","toolArgs":{"command":"git push origin feature/main-docs"}}'
   expect_allow "branch named feature/main-docs" "$payload" || failed=1
+
+  payload='{"toolName":"bash","toolArgs":{"command":"git push origin \"feature\""}}'
+  expect_allow "quoted feature branch" "$payload" || failed=1
+
+  payload='{"toolName":"bash","toolArgs":{"command":"curl https://api.github.com/repos/acme/widgets/rulesets"}}'
+  expect_allow "curl read rulesets" "$payload" || failed=1
 
   payload='{"toolName":"bash","toolArgs":{"command":"gh pr view 12"}}'
   expect_allow "gh pr view" "$payload" || failed=1

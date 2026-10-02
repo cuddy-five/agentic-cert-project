@@ -22,10 +22,10 @@ The Learn unit shows a short JSON example that checks `$TOOL == "delete"`. That 
 
 These are the agent-loop bans that show up as shell text:
 
-- `git push` whose destination is `main` or `master`, including `HEAD:main`, `refs/heads/master`, and `:main`
+- `git push` whose destination is `main` or `master`, including `HEAD:main`, `refs/heads/master`, `:main`, and the same refs in quotes
 - force-push: `--force`, `--force-with-lease`, `--force-if-includes`, a short flag cluster that contains `f`, or a `+refspec`
-- `gh pr merge` and `gh api` calls to `pulls/<n>/merge`
-- `gh api` writes (`PUT`, `PATCH`, `DELETE`) aimed at rulesets or branch protection
+- `gh pr merge`, and `gh api`, `curl`, or `wget` calls that `PUT`, `PATCH`, or `DELETE` `pulls/<id>/merge` (the id may be a number or a shell variable)
+- `gh api`, `curl`, or `wget` writes (`PUT`, `PATCH`, `DELETE`) aimed at rulesets or branch protection
 - `--add-label ready-for-agent` (removing that label is still allowed)
 - `git checkout` or `git switch` to `main` or `master` in the same command as `git commit`
 - `rm` or `mv` aimed at `CODEOWNERS`, `.github/hooks`, Plan Gate, or this script
