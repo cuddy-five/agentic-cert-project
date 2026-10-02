@@ -2,6 +2,7 @@
 
 ## Plan (required)
 - **Goal:**
+<!-- Scope: comma-separated repo paths on this line. A changed file must equal one path or sit under it. "." is not a path. -->
 - **Scope (paths/files):**
 - **Steps:**
   1.
