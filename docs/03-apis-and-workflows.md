@@ -12,6 +12,7 @@ pull request can start a workflow.
 | Pull request | How work enters `main` |
 | `.github/workflows/plan_gate.yml` | Traditional Actions workflow: isolated job, `GITHUB_TOKEN` |
 | Job `require-plan` | Execution layer: fail the PR if the template file is missing, a required heading is missing, or Goal, Scope, Steps, or Success criteria is still blank |
+| Scope line vs diff | Same job: every changed file must equal a Scope path or sit under it. See `docs/02-scope-match.md` |
 | Ruleset `protect-main` + Corey merge | Human accepts or rejects the API-created change |
 
 `GITHUB_TOKEN` on Plan Gate is the **job** token (`contents: read`).

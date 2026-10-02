@@ -18,6 +18,9 @@ jobs:
       has_template: ${{ steps.check.outputs.has_template }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Scope compares base.sha to head.sha. Depth 1 only has the merge commit.
+          fetch-depth: 0
       - id: check
         name: Require plan artifact
         run: |
@@ -38,6 +41,15 @@ jobs:
         run: bash .github/scripts/require-plan-headings.sh
       - name: Prove high-risk shell commands are denied
         run: bash .github/scripts/block-high-risk-command.sh --self-test
+      - name: Prove a file outside Scope fails
+        run: bash .github/scripts/require-scope-match.sh --self-test
+      - name: Require changed files to stay inside Scope
+        env:
+          # Event payload already on the runner. The diff is git, not an API call.
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: bash .github/scripts/require-scope-match.sh
       - name: Show template flag
         run: echo "has_template is ${{ steps.check.outputs.has_template }}"
   read-flag:
