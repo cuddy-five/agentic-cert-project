@@ -36,6 +36,8 @@ jobs:
           # Event payload already on the runner. Not an API call, secret, or extra service.
           PR_BODY: ${{ github.event.pull_request.body }}
         run: bash .github/scripts/require-plan-headings.sh
+      - name: Prove high-risk shell commands are denied
+        run: bash .github/scripts/block-high-risk-command.sh --self-test
       - name: Show template flag
         run: echo "has_template is ${{ steps.check.outputs.has_template }}"
   read-flag:
