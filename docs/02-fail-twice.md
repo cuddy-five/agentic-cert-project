@@ -24,6 +24,7 @@ On the PR, write four lines:
 ## What this is not
 
 - Not an Actions job. Plan Gate does not count failures.
+- Not the shell hook. Push, merge, and ruleset bans are in `docs/02-hooks.md`.
 - Not a cap on different checks. A new check name is a new first failure.
 - Not rollback. Rollback stays the PR template field.
 - Not `prod`. No environment yet.
