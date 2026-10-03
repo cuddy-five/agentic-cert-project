@@ -7,9 +7,9 @@ labels: ["plan"]
 
 ## Goal
 
-## Allowed files
+## Allowed scope
 
-## Success
+## Success criteria
 
 ## Approval
 - [ ] Corey approved this plan before any implementation PR

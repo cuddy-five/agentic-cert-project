@@ -11,8 +11,8 @@
 - **Success criteria (verifiable):**
   - [ ] Required checks pass
   - [ ] Security signals reviewed (as applicable)
-- **Risks + mitigations:**
-- **Rollback / escalation plan:**
+- **Risks + mitigations:** (required for code changes and optional for docs-only)
+- **Rollback / escalation plan:** (required for code changes and optional for docs-only)
 
 ## Evidence
 - Workflow run(s):
