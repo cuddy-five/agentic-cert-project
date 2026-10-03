@@ -11,10 +11,10 @@
 - **Success criteria (verifiable):**
   - [ ] Required checks pass
   - [ ] Security signals reviewed (as applicable)
-- **Risks + mitigations:**
-- **Rollback / escalation plan:**
+- **Risks + mitigations:** (required for code changes and optional for docs-only)
+- **Rollback / escalation plan:** (required for code changes and optional for docs-only)
 
-## Evidence
+## Evidence (n/a is acceptable when no check ran)
 - Workflow run(s):
 - Commit SHA this run evaluated:
 - Durable proof (artifact name, repo path, or “Actions log only”):
