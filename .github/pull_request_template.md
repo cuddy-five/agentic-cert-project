@@ -14,7 +14,7 @@
 - **Risks + mitigations:** (required for code changes and optional for docs-only)
 - **Rollback / escalation plan:** (required for code changes and optional for docs-only)
 
-## Evidence (n/a is acceptable when no check ran)
+## Evidence
 - Workflow run(s):
 - Commit SHA this run evaluated:
 - Durable proof (artifact name, repo path, or “Actions log only”):
