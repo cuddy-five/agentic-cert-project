@@ -2,7 +2,9 @@
 
 This repository is control-plane practice for the GH-600 path. The stack is bash, GitHub Actions, and Markdown. There is no application, no package manager, and no `pytest` or `npm test`.
 
-Follow `docs/adr/agent-loop-contract.md` for how work enters, is claimed, branched, reviewed, and finished, and for the seven bans. Label meanings are in `docs/agents/triage-labels.md`. Do not invent a second process, and do not add a check unless the issue you are on asks for one.
+This file is the index. The procedure is `.github/skills/agent-loop/SKILL.md`. The contract record is `docs/adr/agent-loop-contract.md`. Label meanings are in `docs/agents/triage-labels.md`. The shell hook is `docs/02-hooks.md`. Do not invent a second process, and do not add a check unless the issue you are on asks for one.
+
+Branch from `main` only. Name it `feat/#<n>-…`, `fix/#<n>-…`, or `chore/#<n>-…`.
 
 ## Commands
 
